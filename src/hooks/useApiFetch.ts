@@ -13,9 +13,10 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const baseUrl = import.meta.env.BASE_URL;
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch(baseUrl+url, {
       method: options?.method || 'GET',
       headers: { 'Content-Type': 'application/json' },
       body: options?.body ? JSON.stringify(options.body) : undefined,
@@ -56,6 +57,7 @@ export async function apiFetch<T>(
  * - fetch 성공 시에만 data가 교체됩니다 (fallback 유지)
  */
 export function useApiFetch<T>(url: string, fallbackData: T): UseApiFetchResult<T> {
+  const baseUrl = import.meta.env.BASE_URL;
   const [data, setData] = useState<T>(fallbackData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export function useApiFetch<T>(url: string, fallbackData: T): UseApiFetchResult<
     setLoading(true);
     setError(null);
 
-    fetch(url, { signal: controller.signal })
+    fetch(baseUrl+url, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) {
           throw new Error(`서버에 에러가 발생했습니다 (HTTP ${res.status})`);
