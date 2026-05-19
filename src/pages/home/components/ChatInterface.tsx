@@ -1,46 +1,18 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { type ChatMessage } from '@/mocks/chatMessages';
+import { source, type ChatMessage } from '@/mocks/chatMessages';
 import { apiFetch } from '@/hooks/useApiFetch';
 
 interface ChatSession {
-  id: number;
+  id: string;
   title: string;
   messages: ChatMessage[];
   updatedAt: string;
+  isLocal?: boolean;
 }
 
 interface ChatInterfaceProps {
   userInfo?: { name: string; department: string; initials: string };
 }
-
-const DEMO_SESSIONS: ChatSession[] = [
-  {
-    id: 1,
-    title: '내가 현재 연차가 11일 남았는데 6월 이후로 언제 쓰면 좋을 거 같아?',
-    messages: [
-      {
-        id: 101,
-        sender: 'user',
-        text: '내가 현재 연차가 11일 남았는데 6월 이후로 언제 쓰면 좋을 거 같아?',
-        time: '10:30',
-      },
-      {
-        id: 102,
-        sender: 'ai',
-        text: '6월 이후 남은 11일 연차를 효율적으로 사용하시려면, 9월 초나 10월 중순을 추천드립니다. 특히 추석 연휴(10월 1~3일 예상)와 연계하면 최대 5일의 긴 휴가를 만들 수 있어요. 또한 8월 중순은 업무 비수기인 경우가 많아 팀에 부담을 덜 줄 수 있습니다. 구체적인 날짜는 부서 일정을 확인 후 결정하시는 것이 좋습니다.',
-        time: '10:31',
-        sources: ['연차 관리 지침 v2.1', '휴가 추천 시스템 가이드'],
-      },
-    ],
-    updatedAt: '2026-05-19T10:31:00Z',
-  },
-  {
-    id: 2,
-    title: '새 채팅',
-    messages: [],
-    updatedAt: new Date().toISOString(),
-  },
-];
 
 function AiAvatar() {
   return (
@@ -78,12 +50,12 @@ function MessageBubble({ msg, userInfo }: { msg: ChatMessage; userInfo?: { initi
                 className="inline-flex items-center gap-1 text-[10px] text-teal-600 bg-teal-50 border border-teal-100 rounded-full px-2 py-0.5 font-medium"
               >
                 <i className="ri-link text-[9px]" />
-                {src}
+                {src.filename}
               </span>
             ))}
           </div>
         )}
-        <span className="text-[10px] text-slate-400 px-1">{msg.time}</span>
+        {msg.time && <span className="text-[10px] text-slate-400 px-1">{msg.time}</span>}
       </div>
     </div>
   );
@@ -137,14 +109,19 @@ function formatSessionTime(dateStr: string): string {
 }
 
 export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
-  const [sessions, setSessions] = useState<ChatSession[]>(DEMO_SESSIONS);
-  const [selectedSessionId, setSelectedSessionId] = useState<number>(2);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('chat');
   const [input, setInput] = useState('');
   const [sendLoading, setSendLoading] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadedHistoryRef = useRef<Set<string>>(new Set());
 
   const selectedSession = useMemo(
     () => sessions.find((s) => s.id === selectedSessionId) || null,
@@ -155,34 +132,169 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedSession?.messages, sendLoading]);
 
+  // Fetch sessions on mount
+  useEffect(() => {
+    apiFetch<{ session_id: string; user_id: string; title: string }[]>('/sessions/1')
+      .then((data) => {
+        const mapped: ChatSession[] = data.map((s) => ({
+          id: s.session_id,
+          title: s.title,
+          messages: [],
+          updatedAt: new Date().toISOString(),
+        }));
+        mapped.push({
+          id: `new-${Date.now()}`,
+          title: '새 채팅',
+          messages: [],
+          updatedAt: new Date().toISOString(),
+          isLocal: true,
+        });
+        setSessions(mapped);
+        setSelectedSessionId(mapped.find((s) => !s.isLocal)?.id || mapped[0]?.id || null);
+      })
+      .catch(() => {
+        const newChat: ChatSession = {
+          id: `new-${Date.now()}`,
+          title: '새 채팅',
+          messages: [],
+          updatedAt: new Date().toISOString(),
+          isLocal: true,
+        };
+        setSessions([newChat]);
+        setSelectedSessionId(newChat.id);
+      })
+      .finally(() => setLoadingSessions(false));
+  }, []);
+
+  // Fetch history when selecting a non-local session
+  useEffect(() => {
+    if (!selectedSessionId || selectedSessionId.startsWith('new-')) return;
+    if (loadedHistoryRef.current.has(selectedSessionId)) return;
+
+    const session = sessions.find((s) => s.id === selectedSessionId);
+    if (!session || session.messages.length > 0) return;
+
+    loadedHistoryRef.current.add(selectedSessionId);
+
+    apiFetch<{ session_id: string; messages: { role: string; content: string }[] }>(
+      `/sessions/${selectedSessionId}/history`
+    )
+      .then((data) => {
+        const messages: ChatMessage[] = data.messages.map((m, idx) => ({
+          id: idx + 1,
+          sender: m.role === 'user' ? 'user' : 'ai',
+          text: m.content,
+          time: '',
+        }));
+        setSessions((prev) =>
+          prev.map((s) => (s.id === selectedSessionId ? { ...s, messages } : s))
+        );
+      })
+      .catch(() => {
+        loadedHistoryRef.current.delete(selectedSessionId);
+      });
+  }, [selectedSessionId, sessions]);
+
   const createNewSession = useCallback(() => {
-    const newId = Date.now();
+    const newId = `new-${Date.now()}`;
     setSessions((prev) => {
-      const filtered = prev.filter((s) => s.messages.length > 0);
+      const filtered = prev.filter((s) => s.messages.length > 0 || !s.isLocal);
       return [
         ...filtered,
-        { id: newId, title: '새 채팅', messages: [], updatedAt: new Date().toISOString() },
+        {
+          id: newId,
+          title: '새 채팅',
+          messages: [],
+          updatedAt: new Date().toISOString(),
+          isLocal: true,
+        },
       ];
     });
     setSelectedSessionId(newId);
     setMobileView('chat');
+    setSendError(null);
+    setAttachedFile(null);
   }, []);
 
-  const handleSelectSession = (id: number) => {
+  const handleSelectSession = (id: string) => {
     setSelectedSessionId(id);
     setMobileView('chat');
+    setSendError(null);
+    setAttachedFile(null);
   };
 
   const handleBackToList = () => {
-    setSessions((prev) => prev.filter((s) => s.messages.length > 0));
-    setSelectedSessionId(null as unknown as number);
+    setSessions((prev) => prev.filter((s) => s.messages.length > 0 || !s.isLocal));
+    setSelectedSessionId(null);
     setMobileView('list');
+    setSendError(null);
+    setAttachedFile(null);
+  };
+
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      setAttachedFile(file);
+    }
+    e.target.value = '';
   };
 
   const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed || !selectedSession || sendLoading) return;
 
+    let currentSessionId = selectedSession.id;
+    const previousMessages = selectedSession.messages;
+    const originalSessionId = selectedSession.id;
+
+    // 1. Create new session if needed
+    const isNewLocalSession = selectedSession.isLocal || selectedSession.id.startsWith('new-');
+    if (isNewLocalSession) {
+      try {
+        const newSession = await apiFetch<{
+          session_id: string;
+          user_id: string;
+          title: string;
+        }>('/sessions', { method: 'POST', body: {"user_id": "1", "title": trimmed} });
+
+        currentSessionId = newSession.session_id;
+
+        setSessions((prev) =>
+          prev.map((s) =>
+            s.id === originalSessionId
+              ? { ...s, id: currentSessionId, title: newSession.title || '새 채팅', isLocal: false }
+              : s
+          )
+        );
+        setSelectedSessionId(currentSessionId);
+      } catch (err: any) {
+        setSendError('새 채팅 세션 생성에 실패했습니다: ' + (err.message || ''));
+        return;
+      }
+    }
+
+    // 2. Upload PDF if attached
+    if (attachedFile) {
+      const formData = new FormData();
+      formData.append('file', attachedFile);
+      try {
+        await fetch('/upload-pdf', {
+          method: 'POST',
+          body: formData,
+          headers: {'Content-Type': 'multipart/form-data'}
+        });
+        setAttachedFile(null);
+      } catch (err: any) {
+        setSendError(`PDF 업로드에 실패했습니다: ${err.message || ''}`);
+        return;
+      }
+    }
+
+    // 3. Add user message to UI
     const userMsg: ChatMessage = {
       id: Date.now(),
       sender: 'user',
@@ -192,17 +304,15 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
 
     setSessions((prev) =>
       prev.map((s) => {
-        if (s.id !== selectedSessionId) return s;
-        const updatedMessages = [...s.messages, userMsg];
-        const isFirstQuestion = updatedMessages.filter((m) => m.sender === 'user').length === 1;
+        if (s.id !== currentSessionId) return s;
+        const isFirstUserMessage = s.messages.filter((m) => m.sender === 'user').length === 0;
         return {
           ...s,
-          title:
-            s.title === '새 채팅' && isFirstQuestion
-              ? trimmed.slice(0, 18) + (trimmed.length > 18 ? '...' : '')
-              : s.title,
-          messages: updatedMessages,
+          messages: [...s.messages, userMsg],
           updatedAt: new Date().toISOString(),
+          title: isFirstUserMessage
+            ? trimmed.slice(0, 18) + (trimmed.length > 18 ? '...' : '')
+            : s.title,
         };
       })
     );
@@ -211,24 +321,29 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
     setSendError(null);
     setSendLoading(true);
 
-    const apiMessages = selectedSession.messages.map((m) => ({
-      role: m.sender === 'user' ? 'user' : 'assistant',
-      content: m.text,
-    }));
-    apiMessages.push({ role: 'user', content: trimmed });
+    // 4. Build API message history
+    const apiMessages = [
+      ...previousMessages.map((m) => ({
+        role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
+        content: m.text,
+      })),
+      { role: 'user' as const, content: trimmed },
+    ];
 
+    // 5. Send to API
     try {
       const res = await apiFetch<{
-        message?: { role?: string; content?: string; sources?: string[] };
-        content?: string;
-        sources?: string[];
-      }>('/api/chat', {
+        answer: string;
+        intent: string;
+        sources: { filename: string; page_count?: number; chunk_count?: number }[];
+        mock_context: Record<string, unknown>;
+      }>('/ask', {
         method: 'POST',
-        body: { messages: apiMessages },
+        body: { question: trimmed, user_id: '1', session_id: currentSessionId },
       });
 
-      const aiText = res.message?.content || res.content || '응답을 받지 못했습니다.';
-      const aiSources = res.message?.sources || res.sources;
+      const aiText = res.answer || '응답을 받지 못했습니다.';
+      const aiSources = res.sources || [];
 
       const aiReply: ChatMessage = {
         id: Date.now() + 1,
@@ -240,7 +355,7 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
 
       setSessions((prev) =>
         prev.map((s) => {
-          if (s.id !== selectedSessionId) return s;
+          if (s.id !== currentSessionId) return s;
           return {
             ...s,
             messages: [...s.messages, aiReply],
@@ -292,6 +407,16 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+            {loadingSessions && (
+              <div className="px-3 py-4 space-y-3">
+                <div className="h-3 w-32 bg-slate-100 rounded animate-pulse" />
+                <div className="h-3 w-24 bg-slate-100 rounded animate-pulse" />
+                <div className="h-3 w-28 bg-slate-100 rounded animate-pulse" />
+              </div>
+            )}
+            {!loadingSessions && sessions.length === 0 && (
+              <p className="text-[12px] text-slate-400 text-center py-4">채팅 내역이 없습니다</p>
+            )}
             {sessions.map((session) => {
               const isActive = session.id === selectedSessionId;
               const lastMsg = session.messages[session.messages.length - 1];
@@ -305,9 +430,9 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
                       : 'hover:bg-slate-50/60 border border-transparent'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-2 min-w-0">
                     <p
-                      className={`text-[12px] font-medium truncate flex-1 ${
+                      className={`text-[12px] font-medium truncate flex-1 min-w-0 ${
                         isActive ? 'text-slate-800' : 'text-slate-700'
                       }`}
                     >
@@ -318,7 +443,7 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
                     </span>
                   </div>
                   {lastMsg && (
-                    <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                    <p className="text-[11px] text-slate-400 truncate mt-0.5 min-w-0">
                       {lastMsg.sender === 'user' ? '나: ' : 'AI: '}
                       {lastMsg.text}
                     </p>
@@ -376,6 +501,17 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 relative min-h-0">
+            {selectedSession && selectedSession.messages.length === 0 && !sendLoading && (
+              <div className="flex flex-col items-center justify-center h-full text-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center">
+                  <i className="ri-robot-2-line text-2xl text-slate-300" />
+                </div>
+                <p className="text-[13px] text-slate-400">
+                  인사 정책, 휴가 신청, 법무 문서 등에 대해 질문하세요
+                </p>
+              </div>
+            )}
+
             {(selectedSession?.messages || []).map((msg) => (
               <MessageBubble key={msg.id} msg={msg} userInfo={userInfo} />
             ))}
@@ -410,13 +546,35 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
 
           {/* Input area */}
           <div className="px-4 py-3 border-t border-slate-100 bg-white flex-shrink-0">
+            {attachedFile && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-lg mb-2">
+                <i className="ri-file-pdf-line text-amber-600 text-sm" />
+                <span className="text-[11px] text-amber-700 font-medium truncate flex-1 min-w-0">
+                  {attachedFile.name}
+                </span>
+                <button
+                  onClick={() => setAttachedFile(null)}
+                  className="w-5 h-5 flex items-center justify-center rounded hover:bg-amber-100 cursor-pointer transition-colors flex-shrink-0"
+                >
+                  <i className="ri-close-line text-amber-500 text-xs" />
+                </button>
+              </div>
+            )}
             <div className="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-100 transition-all">
               <button
                 title="문서 첨부"
+                onClick={handleAttachClick}
                 className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-teal-500 cursor-pointer transition-colors flex-shrink-0 mb-0.5"
               >
                 <i className="ri-attachment-2 text-base" />
               </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".pdf,application/pdf"
+                onChange={handleFileChange}
+                className="hidden"
+              />
               <textarea
                 ref={textareaRef}
                 value={input}
