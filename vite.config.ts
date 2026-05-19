@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
 import AutoImport from "unplugin-auto-import/vite";
@@ -8,8 +8,10 @@ const base = process.env.BASE_PATH || "/";
 const isPreview = process.env.IS_PREVIEW ? true : false;
 //const proxyPlugins = isPreview ? [readdyJsxRuntimeProxyPlugin()] : [];
 // https://vite.dev/config/
-export default defineConfig({
-  define: {
+export default defineConfig(({mode}) => {
+  const env = loadEnv(mode, process.cwd(), '')
+
+  return {define: {
     __BASE_PATH__: JSON.stringify(base),
     __IS_PREVIEW__: JSON.stringify(isPreview),
     __READDY_PROJECT_ID__: JSON.stringify(process.env.PROJECT_ID || ""),
@@ -80,7 +82,12 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
-    host: "0.0.0.0",
+    proxy: {
+      '/api': {
+        target: env.VITE_SERVER_URL,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
-});
+}});
