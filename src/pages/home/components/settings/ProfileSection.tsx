@@ -1,5 +1,12 @@
 import { useState } from 'react';
+import { useApiFetch } from '@/hooks/useApiFetch';
 
+/* =================================================================
+   [API 연동 가이드] 내 프로필 데이터
+   1. 아래 fallbackProfile를 제거하고 useApiFetch 주석을 해제하세요.
+   2. 엔드포인트 URL을 첫 번째 인자에 입력하세요.
+      예: useApiFetch<ProfileData>('/api/user/profile', fallbackProfile)
+   ================================================================= */
 interface ProfileData {
   name: string;
   department: string;
@@ -9,7 +16,7 @@ interface ProfileData {
   language: string;
 }
 
-const initialProfile: ProfileData = {
+const fallbackProfile: ProfileData = {
   name: 'A 직원',
   department: '인사팀',
   position: 'HR 담당자',
@@ -28,11 +35,19 @@ const FIELDS: { key: keyof ProfileData; label: string; type: string }[] = [
 ];
 
 export default function ProfileSection() {
+  // const { data: profileData, setData: setProfileData } = useApiFetch<ProfileData>('', fallbackProfile);
+
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>(initialProfile);
-  const [draft, setDraft] = useState<ProfileData>(initialProfile);
+  const [profile, setProfile] = useState<ProfileData>(fallbackProfile);
+  const [draft, setDraft] = useState<ProfileData>(fallbackProfile);
   const [saved, setSaved] = useState(false);
 
+  /* [API 연동 가이드] 프로필 저장
+     1. 아래 handleSave의 setProfile 호출 전에
+        fetch('/api/user/profile', { method: 'PUT', body: JSON.stringify(draft) })
+        를 호출하세요.
+     2. 성공 응답을 받은 후 setProfile(draft) 로 로컬 상태를 갱신하세요.
+  */
   const handleSave = () => {
     setProfile(draft);
     setIsEditing(false);

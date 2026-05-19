@@ -1,4 +1,7 @@
-import { ragDocuments } from '@/mocks/ragDocuments';
+import { useState } from 'react';
+import { type RagDocument } from '@/mocks/ragDocuments';
+import { useApiFetch } from '@/hooks/useApiFetch';
+import DataErrorOverlay from '@/components/base/DataErrorOverlay';
 
 const statusConfig: Record<string, { label: string; className: string; dot: string }> = {
   Indexed: {
@@ -25,16 +28,67 @@ const statusConfig: Record<string, { label: string; className: string; dot: stri
 
 const categoryColors: Record<string, string> = {
   HR: 'text-teal-600 bg-teal-50',
-  '법무': 'text-amber-600 bg-amber-50',
-  '일반': 'text-slate-600 bg-slate-100',
+  법무: 'text-amber-600 bg-amber-50',
+  일반: 'text-slate-600 bg-slate-100',
 };
 
+function RAGSkeleton() {
+  return (
+    <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1.5">
+          <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
+          <div className="h-3 w-24 bg-slate-100 rounded animate-pulse" />
+        </div>
+        <div className="w-7 h-7 rounded-lg bg-slate-100 animate-pulse" />
+      </div>
+      <div className="flex items-center gap-3 bg-slate-50 rounded-lg px-3 py-2">
+        <div className="w-7 h-7 rounded bg-slate-100 animate-pulse flex-shrink-0" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3 w-32 bg-slate-100 rounded animate-pulse" />
+          <div className="w-full bg-slate-100 rounded-full h-1 animate-pulse" />
+        </div>
+        <div className="h-4 w-8 bg-slate-100 rounded animate-pulse" />
+      </div>
+      <div className="space-y-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100">
+            <div className="w-7 h-7 rounded bg-slate-100 animate-pulse flex-shrink-0" />
+            <div className="flex-1 min-w-0 space-y-1">
+              <div className="h-3 w-28 bg-slate-100 rounded animate-pulse" />
+              <div className="h-2.5 w-20 bg-slate-100 rounded animate-pulse" />
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="h-4 w-12 bg-slate-100 rounded-full animate-pulse" />
+              <div className="h-4 w-10 bg-slate-100 rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-slate-100 animate-pulse" />
+          <div className="h-3 w-24 bg-slate-100 rounded animate-pulse" />
+        </div>
+        <div className="h-3 w-16 bg-slate-100 rounded animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 export default function RAGSearchWidget() {
-  const indexed = ragDocuments.filter((d) => d.status === 'Indexed').length;
-  const total = ragDocuments.length;
+  const { data: documents, loading, error } = useApiFetch<RagDocument[]>('/api/rag/documents', []);
+
+  if (loading) {
+    return <RAGSkeleton />;
+  }
+
+  const indexed = documents.filter((d) => d.status === 'Indexed').length;
+  const total = documents.length;
+  const pct = total > 0 ? Math.round((indexed / total) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5">
+    <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5 relative">
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-[13px] font-semibold text-slate-800">지식 베이스</p>
@@ -55,16 +109,16 @@ export default function RAGSearchWidget() {
           <div className="w-full bg-slate-200 rounded-full h-1 mt-1">
             <div
               className="bg-teal-400 h-1 rounded-full"
-              style={{ width: `${(indexed / total) * 100}%` }}
+              style={{ width: `${pct}%` }}
             />
           </div>
         </div>
-        <span className="text-[12px] font-bold text-teal-600">{Math.round((indexed / total) * 100)}%</span>
+        <span className="text-[12px] font-bold text-teal-600">{pct}%</span>
       </div>
 
       {/* Document list */}
       <div className="space-y-2">
-        {ragDocuments.map((doc) => {
+        {documents.map((doc) => {
           const status = statusConfig[doc.status];
           return (
             <div
@@ -101,6 +155,13 @@ export default function RAGSearchWidget() {
           모든 문서 보기
         </button>
       </div>
+
+      {error && (
+        <DataErrorOverlay
+          message="문서 데이터를 불러올 수 없습니다"
+          subMessage={error}
+        />
+      )}
     </div>
   );
 }

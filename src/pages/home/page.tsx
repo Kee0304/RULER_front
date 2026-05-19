@@ -7,39 +7,53 @@ import MiniCalendar from '@/pages/home/components/MiniCalendar';
 import RAGSearchWidget from '@/pages/home/components/RAGSearchWidget';
 import LeaveSchedulePage from '@/pages/home/components/LeaveSchedulePage';
 import SettingsPage from '@/pages/home/components/SettingsPage';
+import StatCard from '@/components/base/StatCard';
+import { StatCardItem } from '@/components/base/StatCardItem';
+import { useApiFetch } from '@/hooks/useApiFetch';
+
+interface UserInfo {
+  name: string;
+  department: string;
+  initials: string;
+}
+
+const defaultUserInfo: UserInfo = {
+  name: 'A 직원',
+  department: '인사팀',
+  initials: 'EA',
+};
+
+/*
+import { apiFetch } from '@/hooks/useApiFetch';
+async function fetchUserInfo(): Promise<UserInfo> {
+  const res = await apiFetch<UserInfo>('/api/user/info');
+  return res;
+}
+*/
 
 interface DashboardContentProps {
   onNavigateToLeave: () => void;
+  userInfo: UserInfo;
 }
 
-function DashboardContent({ onNavigateToLeave }: DashboardContentProps) {
+function DashboardContent({ onNavigateToLeave, userInfo }: DashboardContentProps) {
+  const { data: dashboardStats, loading } = useApiFetch<StatCardItem[]>('/api/dashboard/stats', [
+    { label: '연차 잔여', value: '0일', sub: '총 0일 중', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
+    { label: '색인 문서', value: '0개', sub: '전체 0개 중', icon: 'ri-file-text-line', color: 'text-amber-500', bg: 'bg-amber-50' },
+    { label: '승인 대기', value: '0건', sub: '현재 없음', icon: 'ri-time-line', color: 'text-rose-500', bg: 'bg-rose-50' },
+    { label: '오늘 AI 질의', value: '0회', sub: 'RAG 기반 응답', icon: 'ri-robot-2-line', color: 'text-orange-500', bg: 'bg-orange-50' },
+  ]);
+
   return (
     <div className="flex flex-col gap-3 h-full">
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-3 flex-shrink-0">
-        {[
-          { label: '연차 잔여일', value: '4.5일', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
-          { label: '색인 완료 문서', value: '4개', icon: 'ri-file-text-line', color: 'text-amber-500', bg: 'bg-amber-50' },
-          { label: '승인 대기 중', value: '0건', icon: 'ri-time-line', color: 'text-slate-500', bg: 'bg-slate-100' },
-          { label: '오늘 AI 질의수', value: '12회', icon: 'ri-robot-2-line', color: 'text-navy-900', bg: 'bg-navy-900/5' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-slate-100 shadow-widget px-4 py-3 flex items-center gap-3">
-            <div className={`w-9 h-9 flex items-center justify-center rounded-xl ${stat.bg} flex-shrink-0`}>
-              <i className={`${stat.icon} text-base ${stat.color}`} />
-            </div>
-            <div>
-              <p className="text-[18px] font-bold text-slate-800 leading-none">{stat.value}</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">{stat.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      <StatCard items={dashboardStats} loading={loading} />
 
       {/* Main split content */}
       <div className="flex gap-4 flex-1 min-h-0">
         {/* Left – Chat (60%) */}
         <div className="flex-[3] min-h-0">
-          <ChatInterface />
+          <ChatInterface userInfo={userInfo} />
         </div>
 
         {/* Right – Widgets (40%) */}
@@ -69,19 +83,24 @@ function PlaceholderPage({ title, icon }: { title: string; icon: string }) {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('chat');
+  const [userInfo] = useState<UserInfo>(defaultUserInfo);
+  // 추후 API 연동
+  // useEffect(() => {
+  //   fetchUserInfo().then(setUserInfo).catch(console.error);
+  // }, []);
 
   const navigateToLeave = () => setActiveTab('leave');
 
   const renderContent = () => {
     switch (activeTab) {
       case 'chat':
-        return <DashboardContent onNavigateToLeave={navigateToLeave} />;
+        return <DashboardContent onNavigateToLeave={navigateToLeave} userInfo={userInfo} />;
       case 'leave':
         return <LeaveSchedulePage />;
       case 'settings':
         return <SettingsPage />;
       default:
-        return <DashboardContent onNavigateToLeave={navigateToLeave} />;
+        return <DashboardContent onNavigateToLeave={navigateToLeave} userInfo={userInfo} />;
     }
   };
 
@@ -92,7 +111,7 @@ export default function Home() {
 
       {/* Main area */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <TopBar activeTab={activeTab} />
+        <TopBar activeTab={activeTab} userInfo={userInfo} />
 
         {/* Content */}
         <main className="flex-1 overflow-hidden p-5">

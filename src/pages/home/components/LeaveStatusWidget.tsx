@@ -1,31 +1,83 @@
+import { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { useApiFetch } from '@/hooks/useApiFetch';
+import DataErrorOverlay from '@/components/base/DataErrorOverlay';
 
 interface LeaveStatusWidgetProps {
   onNavigate?: () => void;
 }
 
-const TOTAL_DAYS = 15;
-const REMAINING = 4.5;
-const USED = TOTAL_DAYS - REMAINING;
-
-const donutData = [
-  { name: 'Remaining', value: REMAINING },
-  { name: 'Used', value: USED },
-];
+interface LeaveStatusData {
+  totalDays: number;
+  remaining: number;
+  breakdown: { label: string; value: string; icon: string; color: string }[];
+}
 
 const COLORS = ['#14B8A6', '#E2E8F0'];
 
-const leaveBreakdown = [
-  { label: '연차 잔여일', value: '4.5일', icon: 'ri-calendar-2-line', color: 'text-teal-500' },
-  { label: '병가 잔여일', value: '7일', icon: 'ri-heart-pulse-line', color: 'text-amber-500' },
-  { label: '승인 대기 중', value: '0일', icon: 'ri-time-line', color: 'text-slate-400' },
-];
+function LeaveStatusSkeleton() {
+  return (
+    <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1.5">
+          <div className="h-4 w-20 bg-slate-100 rounded animate-pulse" />
+          <div className="h-3 w-14 bg-slate-100 rounded animate-pulse" />
+        </div>
+        <div className="h-6 w-20 bg-slate-100 rounded-full animate-pulse" />
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="w-24 h-24 rounded-full bg-slate-100 animate-pulse flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="flex justify-between">
+            <div className="h-3 w-8 bg-slate-100 rounded animate-pulse" />
+            <div className="h-3 w-8 bg-slate-100 rounded animate-pulse" />
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-1.5 animate-pulse" />
+          <div className="flex justify-between">
+            <div className="h-2.5 w-10 bg-slate-100 rounded animate-pulse" />
+            <div className="h-2.5 w-10 bg-slate-100 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+      <div className="pt-3 border-t border-slate-100 space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-2.5">
+            <div className="w-5 h-5 bg-slate-100 rounded animate-pulse" />
+            <div className="h-3 w-20 bg-slate-100 rounded animate-pulse flex-1" />
+            <div className="h-3 w-8 bg-slate-100 rounded animate-pulse" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps) {
-  const pct = Math.round((REMAINING / TOTAL_DAYS) * 100);
+  const { data, loading, error } = useApiFetch<LeaveStatusData>('/api/leave/status', {
+    totalDays: 0,
+    remaining: 0,
+    breakdown: [
+      { label: '연차 잔여일', value: '0일', icon: 'ri-calendar-2-line', color: 'text-teal-500' },
+      { label: '병가 잔여일', value: '0일', icon: 'ri-heart-pulse-line', color: 'text-emerald-500' },
+      { label: '승인 대기 중', value: '0건', icon: 'ri-time-line', color: 'text-slate-400' },
+    ],
+  });
+
+  if (loading) {
+    return <LeaveStatusSkeleton />;
+  }
+
+  const { totalDays, remaining, breakdown } = data;
+  const used = totalDays - remaining;
+  const pct = Math.round((remaining / totalDays) * 100);
+
+  const donutData = [
+    { name: 'Remaining', value: remaining },
+    { name: 'Used', value: used },
+  ];
 
   return (
-    <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5">
+    <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5 relative">
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-[13px] font-semibold text-slate-800">내 휴가 현황</p>
@@ -60,7 +112,7 @@ export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-[17px] font-bold text-navy-900 leading-none">{REMAINING}</span>
+            <span className="text-[17px] font-bold text-navy-900 leading-none">{remaining}</span>
             <span className="text-[9px] text-slate-500 font-medium mt-0.5">잔여일</span>
           </div>
         </div>
@@ -78,15 +130,15 @@ export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps
             />
           </div>
           <div className="flex justify-between text-[11px] text-slate-500">
-            <span>{REMAINING}일 잔여</span>
-            <span>총 {TOTAL_DAYS}일</span>
+            <span>{remaining}일 잔여</span>
+            <span>총 {totalDays}일</span>
           </div>
         </div>
       </div>
 
       {/* Breakdown */}
       <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
-        {leaveBreakdown.map((item) => (
+        {breakdown.map((item) => (
           <div key={item.label} className="flex items-center gap-2.5">
             <div className={`w-5 h-5 flex items-center justify-center ${item.color}`}>
               <i className={`${item.icon} text-sm`} />
@@ -106,6 +158,13 @@ export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps
           내 휴가 & 일정 보기
           <i className="ri-arrow-right-line text-xs" />
         </button>
+      )}
+
+      {error && (
+        <DataErrorOverlay
+          message="휴가 데이터를 불러올 수 없습니다"
+          subMessage={error}
+        />
       )}
     </div>
   );

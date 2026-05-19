@@ -1,10 +1,6 @@
 import { ScheduleItem, ScheduleType } from '@/mocks/scheduleItems';
 
 const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토'];
-const JUNE_OFFSET = 1;
-const JUNE_DAYS = 30;
-const PUBLIC_HOLIDAY_DAY = 6;
-const RECOMMENDED_DAY = 7;
 
 const typeColorMap: Record<ScheduleType, string> = {
   '휴가': 'bg-teal-100 text-teal-700',
@@ -19,6 +15,10 @@ interface ScheduleCalendarProps {
   selectedDay: number | null;
   onSelectDay: (day: number) => void;
   onDoubleClickDay: (day: number) => void;
+  year: number;
+  month: number;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
 }
 
 export default function ScheduleCalendar({
@@ -26,24 +26,33 @@ export default function ScheduleCalendar({
   selectedDay,
   onSelectDay,
   onDoubleClickDay,
+  year,
+  month,
+  onPrevMonth,
+  onNextMonth,
 }: ScheduleCalendarProps) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOffset = new Date(year, month, 1).getDay();
+  const PUBLIC_HOLIDAY_DAY = 6;
+  const RECOMMENDED_DAY = 7;
+
   const cells: (number | null)[] = [
-    ...Array(JUNE_OFFSET).fill(null),
-    ...Array.from({ length: JUNE_DAYS }, (_, i) => i + 1),
+    ...Array(firstDayOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
   const getItems = (day: number) => {
-    const date = `2026-06-${String(day).padStart(2, '0')}`;
+    const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     return items.filter((item) => item.date === date);
   };
 
-  const getDayIndex = (day: number) => (JUNE_OFFSET + day - 1) % 7;
+  const getDayIndex = (day: number) => (firstDayOffset + day - 1) % 7;
 
   return (
     <div className="bg-white rounded-xl border border-slate-100 p-5 flex flex-col h-full">
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div>
-          <p className="text-[14px] font-semibold text-slate-800">2026년 6월 일정</p>
+          <p className="text-[14px] font-semibold text-slate-800">{year}년 {month + 1}월 일정</p>
           <p className="text-[11px] text-slate-500 mt-0.5">
             날짜 클릭 → 일정 확인 &nbsp;·&nbsp; 더블클릭 → 빠른 추가
           </p>
@@ -58,10 +67,16 @@ export default function ScheduleCalendar({
             ))}
           </div>
           <div className="flex gap-1">
-            <button className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 cursor-pointer transition-colors">
+            <button
+              onClick={onPrevMonth}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 cursor-pointer transition-colors"
+            >
               <i className="ri-arrow-left-s-line text-base" />
             </button>
-            <button className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 cursor-pointer transition-colors">
+            <button
+              onClick={onNextMonth}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 cursor-pointer transition-colors"
+            >
               <i className="ri-arrow-right-s-line text-base" />
             </button>
           </div>
