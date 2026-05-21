@@ -8,8 +8,6 @@ import RAGSearchWidget from '@/pages/home/components/RAGSearchWidget';
 import LeaveSchedulePage from '@/pages/home/components/LeaveSchedulePage';
 import SettingsPage from '@/pages/home/components/SettingsPage';
 import StatCard from '@/components/base/StatCard';
-import { StatCardItem } from '@/components/base/StatCardItem';
-import { useApiFetch } from '@/hooks/useApiFetch';
 
 export interface UserInfo {
   user_id: string;
@@ -60,7 +58,7 @@ function DashboardContent({ onNavigateToLeave, userInfo, userHR }: DashboardCont
 
   return (
     <div className="flex flex-col gap-3 min-h-full lg:h-full">
-      <StatCard userHR={userHR}/>
+      <StatCard userHR={userHR} activeTab='chat'/>
 
       <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
         {/* Left – Chat: 모바일은 70vh로 높이 고정(=내부 채팅 스크롤 보장) */}
@@ -113,7 +111,7 @@ export default function Home() {
       case 'leave':
         return <LeaveSchedulePage userHR={userHR} />;
       case 'settings':
-        return <SettingsPage />;
+        return <SettingsPage userInfo={userInfo}/>;
       default:
         return <DashboardContent onNavigateToLeave={navigateToLeave} userInfo={userInfo} userHR={userHR} />;
     }

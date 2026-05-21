@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApiFetch } from '@/hooks/useApiFetch';
+import { UserInfo } from '../../page';
 
 /* =================================================================
    [API 연동 가이드] 내 프로필 데이터
@@ -7,39 +8,25 @@ import { useApiFetch } from '@/hooks/useApiFetch';
    2. 엔드포인트 URL을 첫 번째 인자에 입력하세요.
       예: useApiFetch<ProfileData>('/user/profile', fallbackProfile)
    ================================================================= */
-interface ProfileData {
-  name: string;
-  department: string;
-  position: string;
-  email: string;
-  phone: string;
-  language: string;
-}
 
-const fallbackProfile: ProfileData = {
-  name: 'A 직원',
-  department: '인사팀',
-  position: 'HR 담당자',
-  email: 'employee.a@company.com',
-  phone: '010-1234-5678',
-  language: '한국어',
+const fallbackProfile: UserInfo = {
+  user_id: 'emp_000',
+  name: '홍길동',
+  department: '',
+  position: '인사팀',
+  role: '담당',
 };
 
-const FIELDS: { key: keyof ProfileData; label: string; type: string }[] = [
+const FIELDS: { key: keyof UserInfo; label: string; type: string }[] = [
   { key: 'name', label: '이름', type: 'text' },
   { key: 'department', label: '부서', type: 'text' },
   { key: 'position', label: '직책', type: 'text' },
-  { key: 'email', label: '이메일', type: 'email' },
-  { key: 'phone', label: '전화번호', type: 'tel' },
-  { key: 'language', label: '사용 언어', type: 'text' },
 ];
 
-export default function ProfileSection() {
-  // const { data: profileData, setData: setProfileData } = useApiFetch<ProfileData>('', fallbackProfile);
-
+export default function ProfileSection({userInfo}:{userInfo:UserInfo}) {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>(fallbackProfile);
-  const [draft, setDraft] = useState<ProfileData>(fallbackProfile);
+  const [profile, setProfile] = useState<UserInfo>(fallbackProfile);
+  const [draft, setDraft] = useState<UserInfo>(fallbackProfile);
   const [saved, setSaved] = useState(false);
 
   /* [API 연동 가이드] 프로필 저장
@@ -64,6 +51,10 @@ export default function ProfileSection() {
     setDraft(profile);
     setIsEditing(false);
   };
+
+  useEffect(() => {
+    setProfile(userInfo)
+  },[userInfo])
 
   return (
     <div className="space-y-5">
@@ -109,7 +100,7 @@ export default function ProfileSection() {
         <div>
           <p className="text-[15px] font-semibold text-slate-800">{profile.name}</p>
           <p className="text-[12px] text-slate-500 mt-0.5">{profile.department} · {profile.position}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">{profile.email}</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">abc123@gmail.com</p>
         </div>
         {isEditing && (
           <button className="ml-auto text-[12px] text-teal-600 font-medium hover:text-teal-700 cursor-pointer transition-colors whitespace-nowrap">

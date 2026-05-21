@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ScheduleItem, ScheduleType } from '@/mocks/scheduleItems';
+import { UserHR } from '../../page';
 
 const TYPES: ScheduleType[] = ['휴가', '반차', '회의', '출장', '기타'];
 
@@ -41,6 +42,7 @@ interface ScheduleSidePanelProps {
   onAdd: (item: Omit<ScheduleItem, 'id'>) => void;
   onUpdate: (item: ScheduleItem) => void;
   onDelete: (id: number) => void;
+  userHR: UserHR
 }
 
 interface ScheduleCardProps {
@@ -50,7 +52,7 @@ interface ScheduleCardProps {
   onDelete: (id: number) => void;
 }
 
-function ScheduleCard({ item, deleteConfirm, onEdit, onDelete }: ScheduleCardProps) {
+function ScheduleCard({ item, deleteConfirm, onEdit, onDelete}: ScheduleCardProps) {
   const style = typeStyles[item.type];
   const month = item.date.slice(5, 7);
   const day = item.date.slice(8);
@@ -101,6 +103,7 @@ export default function ScheduleSidePanel({
   onAdd,
   onUpdate,
   onDelete,
+  userHR
 }: ScheduleSidePanelProps) {
   const [mode, setMode] = useState<'list' | 'add' | 'edit'>('list');
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -213,7 +216,7 @@ export default function ScheduleSidePanel({
             />
           </div>
 
-          <div>
+          <div>const now = new Date();
             <label className="text-[11px] font-semibold text-slate-600 block mb-1">유형</label>
             <div className="flex flex-wrap gap-2">
               {TYPES.map((t) => {

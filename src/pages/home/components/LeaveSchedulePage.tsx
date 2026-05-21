@@ -65,7 +65,7 @@ export default function LeaveSchedulePage({userHR}) {
 
   return (
     <div className="flex flex-col h-full gap-3">
-      <StatCard userHR={userHR} />
+      <StatCard userHR={userHR} activeTab='leave' />
 
       {!isLoading && 
       
@@ -80,6 +80,7 @@ export default function LeaveSchedulePage({userHR}) {
             month={currentMonth}
             onPrevMonth={goPrevMonth}
             onNextMonth={goNextMonth}
+            userHR = {userHR}
           />
         </div>
         <div className="flex-[2] min-h-0 relative">
@@ -90,8 +91,9 @@ export default function LeaveSchedulePage({userHR}) {
             onAdd={handleAdd}
             onUpdate={handleUpdate}
             onDelete={handleDelete}
+            userHR = {userHR}
           />
-          {itemsError && (
+          {!userHR && (
             <DataErrorOverlay
               message="일정 데이터를 불러올 수 없습니다"
               subMessage={itemsError}

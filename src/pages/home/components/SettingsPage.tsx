@@ -3,6 +3,7 @@ import ProfileSection from '@/pages/home/components/settings/ProfileSection';
 import NotificationSection from '@/pages/home/components/settings/NotificationSection';
 import AIPreferenceSection from '@/pages/home/components/settings/AIPreferenceSection';
 import SecuritySection from '@/pages/home/components/settings/SecuritySection';
+import { UserInfo } from '../page';
 
 type SectionId = 'profile' | 'notification' | 'ai' | 'security';
 
@@ -42,13 +43,13 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export default function SettingsPage() {
+export default function SettingsPage({userInfo} : {userInfo:UserInfo}) {
   const [activeSection, setActiveSection] = useState<SectionId>('profile');
 
   const renderSection = () => {
     switch (activeSection) {
       case 'profile':
-        return <ProfileSection />;
+        return <ProfileSection userInfo={userInfo}/>;
       case 'notification':
         return <NotificationSection />;
       case 'ai':
@@ -56,7 +57,7 @@ export default function SettingsPage() {
       case 'security':
         return <SecuritySection />;
       default:
-        return <ProfileSection />;
+        return <ProfileSection userInfo={userInfo}/>;
     }
   };
 

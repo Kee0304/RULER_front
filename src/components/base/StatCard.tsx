@@ -2,7 +2,7 @@ import StatCardSkeleton from '@/components/base/StatCardSkeleton';
 import { UserHR } from '@/pages/home/page';
 import { useEffect, useState } from 'react';
 
-export default function StatCard({ userHR }: {userHR:UserHR}) {
+export default function StatCard({ userHR, activeTab }: {userHR:UserHR, activeTab:string}) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState(
     [
@@ -13,16 +13,29 @@ export default function StatCard({ userHR }: {userHR:UserHR}) {
     ]
   )
 
+  const now = new Date();
+
   useEffect(() => {
     if (userHR) {
-      setItems(
-        [
-          { label: '연차 잔여', value: userHR.leave.remaining+'일', sub: '총 '+userHR.leave.total+'일 중', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
-          { label: '색인 문서', value: '0개', sub: '전체 0개 중', icon: 'ri-file-text-line', color: 'text-amber-500', bg: 'bg-amber-50' },
-          { label: '승인 대기', value: '0건', sub: '현재 없음', icon: 'ri-time-line', color: 'text-rose-500', bg: 'bg-rose-50' },
-          { label: '오늘 AI 질의', value: '0회', sub: 'RAG 기반 응답', icon: 'ri-robot-2-line', color: 'text-orange-500', bg: 'bg-orange-50' },
-        ]
-      )
+      if (activeTab === 'chat') {
+        setItems(
+          [
+            { label: '연차 잔여', value: userHR.leave.remaining+'일', sub: '총 '+userHR.leave.total+'일 중', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
+            { label: '색인 문서', value: '0개', sub: '전체 0개 중', icon: 'ri-file-text-line', color: 'text-amber-500', bg: 'bg-amber-50' },
+            { label: '승인 대기', value: '0건', sub: '현재 없음', icon: 'ri-time-line', color: 'text-rose-500', bg: 'bg-rose-50' },
+            { label: '오늘 AI 질의', value: '0회', sub: 'RAG 기반 응답', icon: 'ri-robot-2-line', color: 'text-orange-500', bg: 'bg-orange-50' },
+          ]
+        )
+      } else {
+        setItems(
+          [
+            { label: '연차 잔여', value: userHR.leave.remaining+'일', sub: '총 '+userHR.leave.total+'일 중', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
+            { label: '병가 잔여', value: '0일', sub: '총 60일 중', icon: 'ri-heart-pulse-line', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+            { label: '이번달 일정', value: '0건', sub: now.getFullYear()+'년'+(now.getMonth()+1)+'월', icon: 'ri-calendar-event-line', color: 'text-sky-500', bg: 'bg-sky-50' },
+            { label: '승인 대기', value: userHR.leave.pending+'건', sub: userHR.leave.pending ? '대기중' : '현재 없음', icon: 'ri-time-line', color: 'text-slate-500', bg: 'bg-slate-100' },
+          ]
+        )
+      }
       setLoading(false);
     }
   },[userHR])

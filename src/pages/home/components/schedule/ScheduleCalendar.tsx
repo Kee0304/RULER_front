@@ -1,4 +1,5 @@
 import { ScheduleItem, ScheduleType } from '@/mocks/scheduleItems';
+import { UserHR } from '../../page';
 
 const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -19,6 +20,7 @@ interface ScheduleCalendarProps {
   month: number;
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  userHR: UserHR
 }
 
 export default function ScheduleCalendar({
@@ -30,6 +32,7 @@ export default function ScheduleCalendar({
   month,
   onPrevMonth,
   onNextMonth,
+  userHR
 }: ScheduleCalendarProps) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOffset = new Date(year, month, 1).getDay();

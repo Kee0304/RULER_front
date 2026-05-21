@@ -1,8 +1,8 @@
 export type ScheduleType = '휴가' | '반차' | '회의' | '출장' | '기타';
 
 export interface ScheduleItem {
-  id: number;
-  title: string;
+  id?: number;
+  title?: string;
   date: string;
   type: ScheduleType;
   description: string;

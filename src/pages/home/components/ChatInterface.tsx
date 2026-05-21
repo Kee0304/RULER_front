@@ -346,6 +346,7 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
 
       const aiText = res.answer || '응답을 받지 못했습니다.';
       const aiSources = res.sources || [];
+      console.log(aiSources);
 
       const aiReply: ChatMessage = {
         id: Date.now() + 1,
