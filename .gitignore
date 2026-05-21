@@ -48,3 +48,4 @@ sketch
 # End of https://www.toptal.com/developers/gitignore/api/linux,visualstudiocode,react
 
 back/
+out/
