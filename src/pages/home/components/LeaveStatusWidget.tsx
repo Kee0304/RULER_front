@@ -53,7 +53,7 @@ function LeaveStatusSkeleton() {
 }
 
 export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps) {
-  const { data, loading, error } = useApiFetch<LeaveStatusData>('/api/leave/status', {
+  const { data, loading, error } = useApiFetch<LeaveStatusData>('/leave/status', {
     totalDays: 0,
     remaining: 0,
     breakdown: [
@@ -68,8 +68,8 @@ export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps
   }
 
   const { totalDays, remaining, breakdown } = data;
-  const used = totalDays - remaining;
-  const pct = Math.round((remaining / totalDays) * 100);
+  const used = Math.max(totalDays - remaining, 0);
+  const pct = totalDays > 0 ? Math.round((remaining / totalDays) * 100) : 0;
 
   const donutData = [
     { name: 'Remaining', value: remaining },

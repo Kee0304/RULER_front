@@ -7,14 +7,32 @@ interface UseApiFetchResult<T> {
   error: string | null;
 }
 
+function normalizeApiUrl(url: string) {
+  if (!url) return '';
+
+  // 이미 /api로 시작하면 그대로 사용
+  if (url.startsWith('/api')) return url;
+
+  // /로 시작하면 /api만 앞에 붙임
+  if (url.startsWith('/')) return `/api${url}`;
+
+  // / 없이 들어오면 /api/를 붙임
+  return `/api/${url}`;
+}
+
 export async function apiFetch<T>(
   url: string,
   options?: { method?: string; body?: unknown }
 ): Promise<T> {
+
+  let abortTime = 120000;
+  if (url === "/upload-pdf") {
+    abortTime = 1800000;
+  }
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-  const baseUrl = '/api';
-  let headers: Record<string, string> = {};
+  const timeoutId = setTimeout(() => controller.abort(), abortTime);
+
+  const headers: Record<string, string> = {};
   let body: FormData | string | undefined;
 
   if (options?.body instanceof FormData) {
@@ -25,23 +43,27 @@ export async function apiFetch<T>(
   }
 
   try {
-    const res = await fetch(baseUrl + url, {
+    const res = await fetch(normalizeApiUrl(url), {
       method: options?.method || 'GET',
       headers,
       body,
       signal: controller.signal,
     });
+
     clearTimeout(timeoutId);
 
     if (!res.ok) {
       throw new Error(`서버에 에러가 발생했습니다 (HTTP ${res.status})`);
     }
+
     return (await res.json()) as T;
   } catch (err: any) {
     clearTimeout(timeoutId);
+
     if (err.name === 'AbortError') {
-      throw new Error('요청 시간이 초과되었습니다 (10초)');
+      throw new Error('요청 시간이 초과되었습니다');
     }
+
     if (
       err.message?.includes('Failed to fetch') ||
       err.message?.includes('NetworkError') ||
@@ -49,29 +71,17 @@ export async function apiFetch<T>(
     ) {
       throw new Error('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.');
     }
+
     throw err;
   }
 }
 
-/**
- * API fetch 훅 — fallback 데이터를 즉시 제공하고,
- * URL이 설정되면 fetch를 시도해 성공 시에만 데이터를 교체합니다.
- *
- * [사용법]
- * const { data, setData, loading, error } = useApiFetch<XXX>('/api/xxx', fallbackData);
- *
- * [특징]
- * - 10초 타임아웃 후 요청 자동 취소 (AbortController)
- * - HTTP 500 이상 또는 네트워크 에러 시 error 상태 반환
- * - fetch 성공 시에만 data가 교체됩니다 (fallback 유지)
- */
 export function useApiFetch<T>(url: string, fallbackData: T): UseApiFetchResult<T> {
   const [data, setData] = useState<T>(fallbackData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // URL이 비어있으면 fetch를 수행하지 않습니다 (mock/fallback 전용 모드)
     if (!url) return;
 
     let cancelled = false;
@@ -80,9 +90,8 @@ export function useApiFetch<T>(url: string, fallbackData: T): UseApiFetchResult<
 
     setLoading(true);
     setError(null);
-    const baseUrl = '/api';
 
-    fetch(baseUrl + url, { signal: controller.signal })
+    fetch(normalizeApiUrl(url), { signal: controller.signal })
       .then((res) => {
         if (!res.ok) {
           throw new Error(`서버에 에러가 발생했습니다 (HTTP ${res.status})`);
@@ -96,8 +105,9 @@ export function useApiFetch<T>(url: string, fallbackData: T): UseApiFetchResult<
       })
       .catch((err: Error) => {
         if (cancelled) return;
+
         if (err.name === 'AbortError') {
-          setError('요청 시간이 초과되었습니다 (10초)');
+          setError('요청 시간이 초과되었습니다');
         } else if (
           err.message.includes('Failed to fetch') ||
           err.message.includes('NetworkError') ||

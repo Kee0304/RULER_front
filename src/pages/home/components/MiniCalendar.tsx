@@ -68,7 +68,7 @@ export default function MiniCalendar({ onNavigate }: MiniCalendarProps) {
     }
   }, [selectedDay, daysInMonth]);
 
-  const { data: items, loading } = useApiFetch<ScheduleItem[]>('/api/schedule/items', []);
+  const { data: items, loading } = useApiFetch<ScheduleItem[]>('/schedule/items', []);
 
   if (loading) {
     return <CalendarSkeleton />;

@@ -14,7 +14,7 @@ const PW_LABELS: Record<PwKey, string> = {
    [API 연동 가이드] 활성 세션 목록
    1. 아래 fallbackSessions를 제거하고 useApiFetch 주석을 해제하세요.
    2. 엔드포인트 URL을 첫 번째 인자에 입력하세요.
-      예: useApiFetch<Session[]>('/api/security/sessions', [])
+      예: useApiFetch<Session[]>('/security/sessions', [])
    ================================================================= */
 interface Session {
   id: number;
@@ -71,7 +71,7 @@ export default function SecuritySection() {
   const [pwError, setPwError] = useState('');
 
   /* [API 연동 가이드] 비밀번호 변경
-     1. 아래 유효성 검사 후 fetch('/api/security/password', { method: 'PUT', body: ... })
+     1. 아래 유효성 검사 후 apiFetch('/security/password', { method: 'PUT', body: ... })
         를 호출하세요.
      2. 성공 시 setPwSaved(true) 와 함께 폼을 초기화하세요.
   */
@@ -95,7 +95,7 @@ export default function SecuritySection() {
   };
 
   /* [API 연동 가이드] 세션 종료
-     1. 아래 필터링 대신 fetch('/api/security/sessions/' + id, { method: 'DELETE' })
+     1. 아래 필터링 대신 apiFetch('/security/sessions/' + id, { method: 'DELETE' })
         를 호출하세요.
      2. 성공 후 로컬 상태에서 해당 세션을 제거하세요.
   */

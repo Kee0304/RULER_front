@@ -5,7 +5,7 @@ import { useApiFetch } from '@/hooks/useApiFetch';
    [API 연동 가이드] 내 프로필 데이터
    1. 아래 fallbackProfile를 제거하고 useApiFetch 주석을 해제하세요.
    2. 엔드포인트 URL을 첫 번째 인자에 입력하세요.
-      예: useApiFetch<ProfileData>('/api/user/profile', fallbackProfile)
+      예: useApiFetch<ProfileData>('/user/profile', fallbackProfile)
    ================================================================= */
 interface ProfileData {
   name: string;
@@ -44,7 +44,12 @@ export default function ProfileSection() {
 
   /* [API 연동 가이드] 프로필 저장
      1. 아래 handleSave의 setProfile 호출 전에
-        fetch('/api/user/profile', { method: 'PUT', body: JSON.stringify(draft) })
+        apiFetch('/user/profile', { method: 'PUT', body: draft })
+
+          단, 실제로 apiFetch를 쓰려면 import도 바꿔야 합니다.
+
+          import { useApiFetch, apiFetch } from '@/hooks/useApiFetch';
+
         를 호출하세요.
      2. 성공 응답을 받은 후 setProfile(draft) 로 로컬 상태를 갱신하세요.
   */

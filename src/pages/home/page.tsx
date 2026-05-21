@@ -26,7 +26,7 @@ const defaultUserInfo: UserInfo = {
 /*
 import { apiFetch } from '@/hooks/useApiFetch';
 async function fetchUserInfo(): Promise<UserInfo> {
-  const res = await apiFetch<UserInfo>('/api/user/info');
+  const res = await apiFetch<UserInfo>('/user/info');
   return res;
 }
 */
@@ -37,7 +37,7 @@ interface DashboardContentProps {
 }
 
 function DashboardContent({ onNavigateToLeave, userInfo }: DashboardContentProps) {
-  const { data: dashboardStats, loading } = useApiFetch<StatCardItem[]>('/api/dashboard/stats', [
+  const { data: dashboardStats, loading } = useApiFetch<StatCardItem[]>('/dashboard/stats', [
     { label: '연차 잔여', value: '0일', sub: '총 0일 중', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
     { label: '색인 문서', value: '0개', sub: '전체 0개 중', icon: 'ri-file-text-line', color: 'text-amber-500', bg: 'bg-amber-50' },
     { label: '승인 대기', value: '0건', sub: '현재 없음', icon: 'ri-time-line', color: 'text-rose-500', bg: 'bg-rose-50' },
@@ -45,19 +45,17 @@ function DashboardContent({ onNavigateToLeave, userInfo }: DashboardContentProps
   ]);
 
   return (
-    <div className="flex flex-col gap-3 h-full">
-      {/* Stats row */}
+    <div className="flex flex-col gap-3 min-h-full lg:h-full">
       <StatCard items={dashboardStats} loading={loading} />
 
-      {/* Main split content */}
-      <div className="flex gap-4 flex-1 min-h-0">
-        {/* Left – Chat (60%) */}
-        <div className="flex-[3] min-h-0">
+      <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
+        {/* Left – Chat: 모바일은 70vh로 높이 고정(=내부 채팅 스크롤 보장) */}
+        <div className="min-w-0 h-[70vh] lg:h-auto lg:flex-[4] lg:min-h-0">
           <ChatInterface userInfo={userInfo} />
         </div>
 
-        {/* Right – Widgets (40%) */}
-        <div className="flex-[2] overflow-y-auto space-y-4 pb-1 pr-0.5">
+        {/* Right – Widgets: 모바일은 자연 흐름, lg에서만 내부 스크롤 */}
+        <div className="w-full space-y-4 pb-1 pr-0.5 lg:w-auto lg:flex-[1] lg:min-w-[320px] lg:overflow-y-auto">
           <LeaveStatusWidget onNavigate={onNavigateToLeave} />
           <MiniCalendar onNavigate={onNavigateToLeave} />
           <RAGSearchWidget />
@@ -113,8 +111,8 @@ export default function Home() {
       <div className="flex flex-col flex-1 overflow-hidden">
         <TopBar activeTab={activeTab} userInfo={userInfo} />
 
-        {/* Content */}
-        <main className="flex-1 overflow-hidden p-5">
+        {/* Content — 모바일: 페이지 스크롤 / lg: 고정(내부만 스크롤) */}
+        <main className="flex-1 overflow-y-auto lg:overflow-hidden p-5">
           {renderContent()}
         </main>
       </div>

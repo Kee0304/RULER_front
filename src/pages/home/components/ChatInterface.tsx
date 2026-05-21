@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { source, type ChatMessage } from '@/mocks/chatMessages';
 import { apiFetch } from '@/hooks/useApiFetch';
 
+
 interface ChatSession {
   id: string;
   title: string;
@@ -282,10 +283,9 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
       const formData = new FormData();
       formData.append('file', attachedFile);
       try {
-        await fetch('/upload-pdf', {
+        await apiFetch('/upload-pdf', {
           method: 'POST',
           body: formData,
-          headers: {'Content-Type': 'multipart/form-data'}
         });
         setAttachedFile(null);
       } catch (err: any) {
@@ -387,7 +387,7 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl overflow-hidden shadow-widget border border-slate-100">
+    <div className="flex flex-col h-full bg-white rounded-xl overflow-y-auto shadow-widget border border-slate-100">
       <div className="flex flex-col lg:flex-row h-full">
         {/* Chat list */}
         <div
@@ -456,7 +456,7 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
 
         {/* Chat content */}
         <div
-          className={`flex flex-col flex-1 min-w-0 ${
+          className={`flex flex-col flex-1 min-w-0 min-h-0 ${
             mobileView === 'chat' ? 'flex-1' : 'hidden lg:flex'
           }`}
         >

@@ -1,5 +1,5 @@
-import StatCardItem from '@/components/base/StatCardItem';
 import StatCardSkeleton from '@/components/base/StatCardSkeleton';
+import { StatCardItem } from './StatCardItem';
 
 interface StatCardProps {
   items: StatCardItem[];

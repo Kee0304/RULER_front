@@ -13,14 +13,14 @@ export default function LeaveSchedulePage() {
   const [currentMonth, setCurrentMonth] = useState(now.getMonth()); // 0-based
   const curMonthLabel = `${currentYear}년 ${currentMonth + 1}월`;
 
-  const { data: leaveStats, loading: statsLoading } = useApiFetch<StatCardItem[]>('/api/leave/stats', [
+  const { data: leaveStats, loading: statsLoading } = useApiFetch<StatCardItem[]>('/leave/stats', [
     { label: '연차 잔여', value: '0일', sub: '총 15일 중', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
     { label: '병가 잔여', value: '0일', sub: '총 10일 중', icon: 'ri-heart-pulse-line', color: 'text-emerald-500', bg: 'bg-emerald-50' },
     { label: '이번달 일정', value: '0건', sub: curMonthLabel, icon: 'ri-calendar-event-line', color: 'text-sky-500', bg: 'bg-sky-50' },
     { label: '승인 대기', value: '0건', sub: '현재 없음', icon: 'ri-time-line', color: 'text-slate-500', bg: 'bg-slate-100' },
   ]);
 
-  const { data: scheduleItems, setData: setScheduleItems, loading: itemsLoading, error: itemsError } = useApiFetch<ScheduleItem[]>('/api/schedule/items', []);
+  const { data: scheduleItems, setData: setScheduleItems, loading: itemsLoading, error: itemsError } = useApiFetch<ScheduleItem[]>('/schedule/items', []);
   const [selectedDay, setSelectedDay] = useState<number | null>(7);
   const [addTrigger, setAddTrigger] = useState<AddTrigger | null>(null);
 

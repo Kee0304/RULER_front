@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { type RagDocument } from '@/mocks/ragDocuments';
+import { RagResult, type RagDocument } from '@/mocks/ragDocuments';
 import { useApiFetch } from '@/hooks/useApiFetch';
 import DataErrorOverlay from '@/components/base/DataErrorOverlay';
 
@@ -77,15 +77,16 @@ function RAGSkeleton() {
 }
 
 export default function RAGSearchWidget() {
-  const { data: documents, loading, error } = useApiFetch<RagDocument[]>('/api/rag/documents', []);
+  const {data, setData, loading, error} = useApiFetch<RagResult>('/docs-list', {documents: [], total_files: 0});
+  const documents =  data.documents;
 
   if (loading) {
     return <RAGSkeleton />;
   }
 
-  const indexed = documents.filter((d) => d.status === 'Indexed').length;
+  // const indexed = documents.filter((d) => d.status === 'Indexed').length;
   const total = documents.length;
-  const pct = total > 0 ? Math.round((indexed / total) * 100) : 0;
+  // const pct = total > 0 ? Math.round((indexed / total) * 100) : 0;
 
   return (
     <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5 relative">
@@ -105,40 +106,40 @@ export default function RAGSearchWidget() {
           <i className="ri-database-2-line text-teal-500 text-base" />
         </div>
         <div className="flex-1">
-          <p className="text-[11px] text-slate-600 font-medium">전체 {total}개 중 {indexed}개 색인 완료</p>
+          {/* <p className="text-[11px] text-slate-600 font-medium">전체 {total}개 중 {indexed}개 색인 완료</p> */}
           <div className="w-full bg-slate-200 rounded-full h-1 mt-1">
             <div
               className="bg-teal-400 h-1 rounded-full"
-              style={{ width: `${pct}%` }}
+              // style={{ width: `${pct}%` }}
             />
           </div>
         </div>
-        <span className="text-[12px] font-bold text-teal-600">{pct}%</span>
+        {/* <span className="text-[12px] font-bold text-teal-600">{pct}%</span> */}
       </div>
 
       {/* Document list */}
       <div className="space-y-2">
         {documents.map((doc) => {
-          const status = statusConfig[doc.status];
+          // const status = statusConfig[doc.status];
           return (
             <div
-              key={doc.id}
+              // key={doc.id}
               className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 hover:border-teal-100 hover:bg-teal-50/30 transition-all cursor-pointer group"
             >
               <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
-                <i className={`${doc.icon} text-base text-slate-500 group-hover:text-teal-500 transition-colors`} />
+                {/* <i className={`${doc.icon} text-base text-slate-500 group-hover:text-teal-500 transition-colors`} /> */}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-medium text-slate-700 truncate">{doc.name}</p>
-                <p className="text-[10px] text-slate-400">{doc.date} · {doc.size}</p>
+                {/* <p className="text-[12px] font-medium text-slate-700 truncate">{doc.name}</p>
+                <p className="text-[10px] text-slate-400">{doc.date} · {doc.size}</p> */}
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${status.className}`}>
+                {/* <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${status.className}`}>
                   {status.label}
                 </span>
                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${categoryColors[doc.category] ?? 'text-slate-500 bg-slate-100'}`}>
                   {doc.category}
-                </span>
+                </span> */}
               </div>
             </div>
           );
