@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from '@/components/feature/Sidebar';
 import TopBar from '@/pages/home/components/TopBar';
 import ChatInterface from '@/pages/home/components/ChatInterface';
@@ -11,32 +11,52 @@ import StatCard from '@/components/base/StatCard';
 import { StatCardItem } from '@/components/base/StatCardItem';
 import { useApiFetch } from '@/hooks/useApiFetch';
 
-interface UserInfo {
+export interface UserInfo {
+  user_id: string;
   name: string;
   department: string;
-  initials: string;
+  position: string;
+  role: string;
 }
 
-const defaultUserInfo: UserInfo = {
-  name: 'A 직원',
-  department: '인사팀',
-  initials: 'EA',
-};
+interface Schedule {
+  date: string;
+  type: string;
+  description: string;
 
-/*
+}
+
+export interface UserHR {
+    leave: {
+      total: number,
+      used: number,
+      remaining: number,
+      pending: number
+    };
+  upcoming_schedules: Schedule[];
+}
+
+
+// 더미용
 import { apiFetch } from '@/hooks/useApiFetch';
 async function fetchUserInfo(): Promise<UserInfo> {
-  const res = await apiFetch<UserInfo>('/user/info');
+  const res = await apiFetch<UserInfo>('/mock/users/emp_003');
   return res;
 }
-*/
+
+async function fetchUserHR(): Promise<UserHR> {
+  const res = await apiFetch<UserHR>('/mock/hr/emp_003');
+  return res;
+}
+
 
 interface DashboardContentProps {
   onNavigateToLeave: () => void;
   userInfo: UserInfo;
+  userHR: UserHR
 }
 
-function DashboardContent({ onNavigateToLeave, userInfo }: DashboardContentProps) {
+function DashboardContent({ onNavigateToLeave, userInfo, userHR }: DashboardContentProps) {
   const { data: dashboardStats, loading } = useApiFetch<StatCardItem[]>('/dashboard/stats', [
     { label: '연차 잔여', value: '0일', sub: '총 0일 중', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
     { label: '색인 문서', value: '0개', sub: '전체 0개 중', icon: 'ri-file-text-line', color: 'text-amber-500', bg: 'bg-amber-50' },
@@ -81,24 +101,27 @@ function PlaceholderPage({ title, icon }: { title: string; icon: string }) {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('chat');
-  const [userInfo] = useState<UserInfo>(defaultUserInfo);
-  // 추후 API 연동
-  // useEffect(() => {
-  //   fetchUserInfo().then(setUserInfo).catch(console.error);
-  // }, []);
+
+  const [userInfo, setUserInfo] = useState<UserInfo>({user_id: "emp_00",name: "",department:"",position:"", role:""});
+  const [userHR, setUserHR] = useState<UserHR>();
+
+  useEffect(() => {
+    fetchUserInfo().then(setUserInfo).catch(console.error);
+    fetchUserHR().then(setUserHR).catch(console.error);
+  }, []);
 
   const navigateToLeave = () => setActiveTab('leave');
 
   const renderContent = () => {
     switch (activeTab) {
       case 'chat':
-        return <DashboardContent onNavigateToLeave={navigateToLeave} userInfo={userInfo} />;
+        return <DashboardContent onNavigateToLeave={navigateToLeave} userInfo={userInfo} userHR={userHR} />;
       case 'leave':
         return <LeaveSchedulePage />;
       case 'settings':
         return <SettingsPage />;
       default:
-        return <DashboardContent onNavigateToLeave={navigateToLeave} userInfo={userInfo} />;
+        return <DashboardContent onNavigateToLeave={navigateToLeave} userInfo={userInfo} userHR={userHR} />;
     }
   };
 

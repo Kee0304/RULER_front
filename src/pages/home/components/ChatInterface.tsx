@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { source, type ChatMessage } from '@/mocks/chatMessages';
 import { apiFetch } from '@/hooks/useApiFetch';
+import { UserInfo } from '../page';
 
 
 interface ChatSession {
@@ -12,7 +13,7 @@ interface ChatSession {
 }
 
 interface ChatInterfaceProps {
-  userInfo?: { name: string; department: string; initials: string };
+  userInfo?: UserInfo;
 }
 
 function AiAvatar() {
@@ -23,14 +24,15 @@ function AiAvatar() {
   );
 }
 
-function MessageBubble({ msg, userInfo }: { msg: ChatMessage; userInfo?: { initials: string } }) {
+function MessageBubble({ msg, userInfo }: { msg: ChatMessage; userInfo?: UserInfo }) {
   const isUser = msg.sender === 'user';
+  const initials = 'EA';
   return (
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       {!isUser && <AiAvatar />}
       {isUser && (
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
-          {userInfo?.initials ?? 'EA'}
+          {initials}
         </div>
       )}
       <div className={`max-w-[76%] ${isUser ? 'items-end' : 'items-start'} flex flex-col gap-1`}>

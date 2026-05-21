@@ -1,6 +1,8 @@
+import { UserHR, UserInfo } from "../page";
+
 interface TopBarProps {
   activeTab: string;
-  userInfo: { name: string; department: string; initials: string };
+  userInfo: UserInfo;
 }
 
 const tabTitles: Record<string, { label: string; icon: string; desc: string }> = {
@@ -9,7 +11,7 @@ const tabTitles: Record<string, { label: string; icon: string; desc: string }> =
   settings: { label: '설정', icon: 'ri-settings-4-line', desc: '환경 설정 및 알림 구성' },
 };
 
-export default function TopBar({ activeTab, userInfo }: TopBarProps) {
+export default function TopBar({ activeTab, userInfo}: TopBarProps) {
   const info = tabTitles[activeTab] ?? tabTitles.dashboard;
   const today = new Date().toLocaleDateString('ko-KR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -41,7 +43,7 @@ export default function TopBar({ activeTab, userInfo }: TopBarProps) {
 
         <div className="flex items-center gap-2 pl-1 cursor-pointer group">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-[11px] font-bold">
-            {userInfo.initials}
+            {"EA"}
           </div>
           <div className="hidden sm:block">
             <p className="text-[12px] font-semibold text-slate-700 leading-tight group-hover:text-teal-600 transition-colors">{userInfo.name}</p>

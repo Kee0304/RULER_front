@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useApiFetch } from '@/hooks/useApiFetch';
 import DataErrorOverlay from '@/components/base/DataErrorOverlay';
+import { UserHR } from '../page';
 
 interface LeaveStatusWidgetProps {
   onNavigate?: () => void;
+  userHR: UserHR;
 }
 
 interface LeaveStatusData {
@@ -52,29 +54,28 @@ function LeaveStatusSkeleton() {
   );
 }
 
-export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps) {
-  const { data, loading, error } = useApiFetch<LeaveStatusData>('/leave/status', {
-    totalDays: 0,
-    remaining: 0,
-    breakdown: [
-      { label: '연차 잔여일', value: '0일', icon: 'ri-calendar-2-line', color: 'text-teal-500' },
-      { label: '병가 잔여일', value: '0일', icon: 'ri-heart-pulse-line', color: 'text-emerald-500' },
-      { label: '승인 대기 중', value: '0건', icon: 'ri-time-line', color: 'text-slate-400' },
-    ],
-  });
+export default function LeaveStatusWidget({ onNavigate, userHR }: LeaveStatusWidgetProps) {
+  const [loading, setLoading] = useState(true);
+  const [donutData, setDonut] = useState([
+    { name: 'Remaining', value: 0 },
+    { name: 'Used', value: 0 },]
+  );
 
-  if (loading) {
-    return <LeaveStatusSkeleton />;
-  }
+  const [pct, setPct] = useState(0);
 
-  const { totalDays, remaining, breakdown } = data;
-  const used = Math.max(totalDays - remaining, 0);
-  const pct = totalDays > 0 ? Math.round((remaining / totalDays) * 100) : 0;
+  useEffect(() => {
+    const leave = userHR.leave;
+    const pct = leave.total > 0 ? Math.round((leave.remaining / leave.total) * 100) : 0;
+    setPct(pct);
+    setDonut([{ name: 'Remaining', value: leave.remaining }, { name: 'Used', value: leave.used },])
+    if (userHR) {
+      setLoading(false);
+    }
+  },[userHR])
 
-  const donutData = [
-    { name: 'Remaining', value: remaining },
-    { name: 'Used', value: used },
-  ];
+
+
+
 
   return (
     <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5 relative">
@@ -112,7 +113,7 @@ export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-[17px] font-bold text-navy-900 leading-none">{remaining}</span>
+            <span className="text-[17px] font-bold text-navy-900 leading-none">{userHR.leave.remaining}</span>
             <span className="text-[9px] text-slate-500 font-medium mt-0.5">잔여일</span>
           </div>
         </div>
@@ -130,8 +131,8 @@ export default function LeaveStatusWidget({ onNavigate }: LeaveStatusWidgetProps
             />
           </div>
           <div className="flex justify-between text-[11px] text-slate-500">
-            <span>{remaining}일 잔여</span>
-            <span>총 {totalDays}일</span>
+            <span>{userHR.leave.remaining}일 잔여</span>
+            <span>총 {userHR.leave.total}일</span>
           </div>
         </div>
       </div>
