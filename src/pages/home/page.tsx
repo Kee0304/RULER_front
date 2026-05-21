@@ -57,16 +57,10 @@ interface DashboardContentProps {
 }
 
 function DashboardContent({ onNavigateToLeave, userInfo, userHR }: DashboardContentProps) {
-  const { data: dashboardStats, loading } = useApiFetch<StatCardItem[]>('/dashboard/stats', [
-    { label: '연차 잔여', value: '0일', sub: '총 0일 중', icon: 'ri-calendar-2-line', color: 'text-teal-500', bg: 'bg-teal-50' },
-    { label: '색인 문서', value: '0개', sub: '전체 0개 중', icon: 'ri-file-text-line', color: 'text-amber-500', bg: 'bg-amber-50' },
-    { label: '승인 대기', value: '0건', sub: '현재 없음', icon: 'ri-time-line', color: 'text-rose-500', bg: 'bg-rose-50' },
-    { label: '오늘 AI 질의', value: '0회', sub: 'RAG 기반 응답', icon: 'ri-robot-2-line', color: 'text-orange-500', bg: 'bg-orange-50' },
-  ]);
 
   return (
     <div className="flex flex-col gap-3 min-h-full lg:h-full">
-      <StatCard items={dashboardStats} loading={loading} />
+      <StatCard userHR={userHR}/>
 
       <div className="flex flex-col lg:flex-row gap-4 lg:flex-1 lg:min-h-0">
         {/* Left – Chat: 모바일은 70vh로 높이 고정(=내부 채팅 스크롤 보장) */}
@@ -76,7 +70,7 @@ function DashboardContent({ onNavigateToLeave, userInfo, userHR }: DashboardCont
 
         {/* Right – Widgets: 모바일은 자연 흐름, lg에서만 내부 스크롤 */}
         <div className="w-full space-y-4 pb-1 pr-0.5 lg:w-auto lg:flex-[1] lg:min-w-[320px] lg:overflow-y-auto">
-          <LeaveStatusWidget onNavigate={onNavigateToLeave} />
+          <LeaveStatusWidget onNavigate={onNavigateToLeave} userHR={userHR}/>
           <MiniCalendar onNavigate={onNavigateToLeave} />
           <RAGSearchWidget />
         </div>
@@ -117,7 +111,7 @@ export default function Home() {
       case 'chat':
         return <DashboardContent onNavigateToLeave={navigateToLeave} userInfo={userInfo} userHR={userHR} />;
       case 'leave':
-        return <LeaveSchedulePage />;
+        return <LeaveSchedulePage userHR={userHR} />;
       case 'settings':
         return <SettingsPage />;
       default:

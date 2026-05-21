@@ -64,20 +64,18 @@ export default function LeaveStatusWidget({ onNavigate, userHR }: LeaveStatusWid
   const [pct, setPct] = useState(0);
 
   useEffect(() => {
-    const leave = userHR.leave;
-    const pct = leave.total > 0 ? Math.round((leave.remaining / leave.total) * 100) : 0;
-    setPct(pct);
-    setDonut([{ name: 'Remaining', value: leave.remaining }, { name: 'Used', value: leave.used },])
     if (userHR) {
+      const leave = userHR.leave;
+      const pct = leave.total > 0 ? Math.round((leave.remaining / leave.total) * 100) : 0;
+      setPct(pct);
+      setDonut([{ name: 'Remaining', value: leave.remaining }, { name: 'Used', value: leave.used },])
       setLoading(false);
     }
   },[userHR])
 
-
-
-
-
   return (
+    (
+    !loading &&
     <div className="bg-white rounded-xl shadow-widget border border-slate-100 p-5 relative">
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -139,7 +137,7 @@ export default function LeaveStatusWidget({ onNavigate, userHR }: LeaveStatusWid
 
       {/* Breakdown */}
       <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
-        {breakdown.map((item) => (
+        {/* {breakdown.map((item) => (
           <div key={item.label} className="flex items-center gap-2.5">
             <div className={`w-5 h-5 flex items-center justify-center ${item.color}`}>
               <i className={`${item.icon} text-sm`} />
@@ -147,7 +145,7 @@ export default function LeaveStatusWidget({ onNavigate, userHR }: LeaveStatusWid
             <span className="text-[12px] text-slate-600 flex-1">{item.label}</span>
             <span className="text-[12px] font-semibold text-slate-800">{item.value}</span>
           </div>
-        ))}
+        ))} */}
       </div>
 
       {onNavigate && (
@@ -161,12 +159,7 @@ export default function LeaveStatusWidget({ onNavigate, userHR }: LeaveStatusWid
         </button>
       )}
 
-      {error && (
-        <DataErrorOverlay
-          message="휴가 데이터를 불러올 수 없습니다"
-          subMessage={error}
-        />
-      )}
     </div>
+    )
   );
 }
