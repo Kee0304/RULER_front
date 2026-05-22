@@ -131,6 +131,15 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
     [sessions, selectedSessionId]
   );
 
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ message, type });
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+  };
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedSession?.messages, sendLoading]);
@@ -167,6 +176,10 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
         setSelectedSessionId(newChat.id);
       })
       .finally(() => setLoadingSessions(false));
+
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
   }, []);
 
   // Fetch history when selecting a non-local session
@@ -290,6 +303,7 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
           body: formData,
         });
         setAttachedFile(null);
+        showToast("파일 업로드가 완료되었습니다.")
       } catch (err: any) {
         setSendError(`PDF 업로드에 실패했습니다: ${err.message || ''}`);
         return;
@@ -606,6 +620,34 @@ export default function ChatInterface({ userInfo }: ChatInterfaceProps) {
           </div>
         </div>
       </div>
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border bg-white animate-toast-in ${
+            toast.type === 'success' ? 'border-teal-100' : 'border-red-100'
+          }`}
+        >
+          <div
+            className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+              toast.type === 'success' ? 'bg-teal-50' : 'bg-red-50'
+            }`}
+          >
+            <i
+              className={`text-sm ${
+                toast.type === 'success'
+                  ? 'ri-check-line text-teal-600'
+                  : 'ri-error-warning-line text-red-600'
+              }`}
+            />
+          </div>
+          <span className="text-[12px] font-medium text-slate-700">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-100 cursor-pointer transition-colors flex-shrink-0 ml-1"
+          >
+            <i className="ri-close-line text-slate-400 text-xs" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

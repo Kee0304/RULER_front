@@ -1,3 +1,4 @@
+import { UserHR, UserInfo } from '@/pages/home/page';
 import { useState } from 'react';
 
 interface NavItem {
@@ -16,9 +17,10 @@ const navItems: NavItem[] = [
 interface SidebarProps {
   activeTab: string;
   onTabChange: (id: string) => void;
+  userInfo: UserInfo
 }
 
-export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabChange, userInfo }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -99,8 +101,8 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </div>
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <p className="text-white text-[13px] font-semibold truncate">A 직원</p>
-            <p className="text-slate-500 text-[11px] truncate">인사팀</p>
+            <p className="text-white text-[13px] font-semibold truncate">{userInfo.name}</p>
+            <p className="text-slate-500 text-[11px] truncate">{userInfo.department}</p>
           </div>
         )}
         {!collapsed && (

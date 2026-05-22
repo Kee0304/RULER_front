@@ -120,7 +120,7 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-[#F0F4F8] overflow-hidden">
       {/* Sidebar */}
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} userInfo={userInfo} />
 
       {/* Main area */}
       <div className="flex flex-col flex-1 overflow-hidden">
